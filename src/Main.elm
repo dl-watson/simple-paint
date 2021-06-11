@@ -3,11 +3,10 @@ module Main exposing (..)
 import Browser
 import Canvas exposing (..)
 import Canvas.Settings exposing (..)
+import Canvas.Settings.Line exposing (LineCap(..), lineCap)
 import Color
 import Html exposing (Html, div, h1, img, text)
 import Html.Attributes exposing (src, style)
-import Canvas.Settings.Line exposing (lineCap)
-import Canvas.Settings.Line exposing (LineCap(..))
 
 
 width : number
@@ -55,8 +54,8 @@ view model =
     div []
         [ Canvas.toHtml ( width, height )
             []
-            [ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ] 
-            , shapes [ stroke Color.black] [ path (100, 100) [ lineTo (200, 100) ] ]
+            [ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
+            , shapes [ stroke Color.black ] [ path ( 100, 100 ) [ lineTo ( 200, 100 ) ] ]
             ]
         ]
 
