@@ -12,6 +12,10 @@ import Debug exposing (log)
 import Html exposing (Html, aside, div, h1, img, text)
 import Html.Attributes exposing (src, style)
 import Html.Events.Extra.Mouse as Mouse
+import Canvas.Settings.Line exposing (lineWidth)
+import Canvas.Settings.Line exposing (lineJoin)
+import Canvas.Settings.Line exposing (LineJoin)
+import Canvas.Settings.Line exposing (LineJoin(..))
 
 
 
@@ -81,7 +85,6 @@ type alias Point =
 
 type alias Stroke =
     List Point
-
 
 type alias Model =
     { -- All of the strokes made in our app, form the drawing
@@ -169,7 +172,7 @@ view model =
             ]
             -- ^^ Attributes
             [ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
-            , shapes [ stroke Color.black ] (List.map createPath model.strokes) ]
+            , shapes [ stroke Color.black, lineCap RoundCap, lineWidth 2, lineJoin RoundJoin ] (List.map createPath model.strokes) ]
         ]
 
 
@@ -193,7 +196,8 @@ createPath stroke =
     in
     -- List Point -> List PathSegment
     -- lineTo : Point -> PathSegment
-    path startingPoint (List.map lineTo segments)
+    path startingPoint (List.map (\segment -> (lineTo segment)) segments)
+    --                  List.map(segments, segment => lineTo(segment))
 
 
 
