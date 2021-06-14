@@ -1,6 +1,6 @@
 module Main exposing (..)
 
--- import Html.Events.Extra.Touch as Touch -- when adding touch support
+-- import Html.Events.Extra.Touch as Touch
 
 import Browser
 import Canvas exposing (..)
@@ -11,11 +11,8 @@ import Debug exposing (log)
 import Html exposing (Html, aside, div, h1, img, text)
 import Html.Attributes exposing (src, style)
 import Html.Events.Extra.Mouse as Mouse
+import Html.Attributes exposing (class)
 
-
-
--- [elm-canvas](https://package.elm-lang.org/packages/joakin/elm-canvas/4.3.0/)
--- [elm-pointer-events Extra.Mouse](https://package.elm-lang.org/packages/mpizenberg/elm-pointer-events/latest/Html-Events-Extra-Mouse)
 {-
    elm-canvas:
    * clear : Point -> Float -> Float -> Renderable
@@ -30,34 +27,39 @@ import Html.Events.Extra.Mouse as Mouse
        see [lineCap](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineCap) for more usage details
 -}
 
-{-| `width` is a global variable representing the width of the canvas. -}
+
+{-| `width` is a global variable representing the width of the canvas.
+-}
 width : number
 width =
-    500
+    700
 
-{-| `height` is a global variable representing the height of the canvas. -}
+
+{-| `height` is a global variable representing the height of the canvas.
+-}
 height : number
 height =
-    300
+    400
 
 
 
 ---- MODEL ----
 
 
-{-| the `Point` type represents a single pair of ( x, y ) coordinates. -}
+{-| the `Point` type represents a single pair of ( x, y ) coordinates.
+-}
 type alias Point =
     ( Float, Float )
 
 
-
-{-| the `Stroke` type represents a list of coordinate pairs of `.offsetPos` mouse positions from a user's `Mouse.onDown` until their `Mouse.onUp`. -} 
+{-| the `Stroke` type represents a list of coordinate pairs of `.offsetPos` mouse positions from a user's `Mouse.onDown` until their `Mouse.onUp`.
+-}
 type alias Stroke =
     List Point
 
 
 type alias Model =
-    { -- strokes represents a list of all `Stroke`s; together they form the drawing.
+    { -- `strokes` represents a list of all `Stroke`s; together they form the drawing.
       strokes : List Stroke
 
     -- Possible alternative design involves holding a buffer to the current stroke, and using "strokes" to hold all *previously* finished strokes.
@@ -69,8 +71,6 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( { strokes = []
-
-      -- when Mouse.onDown -> isDrawing = True
       , isDrawing = False
       }
     , Cmd.none
@@ -82,8 +82,7 @@ init =
 
 
 type Msg
-    = NoOp
-    | CanvasMouseDown Point
+    = CanvasMouseDown Point
     | CanvasMouseMove Point
     | CanvasMouseUp
 
@@ -91,9 +90,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     ( case msg of
-        NoOp ->
-            model
-
         CanvasMouseDown point ->
             { model
                 | isDrawing = True
@@ -101,27 +97,19 @@ update msg model =
             }
 
         CanvasMouseMove point ->
-            -- get the most recent stroke out of model.strokes, add this point to it, and update model.strokes to have this *new* list as its beginning
             let
                 prevStroke =
                     List.head model.strokes |> Maybe.withDefault [ point ]
 
                 currentStroke =
                     point :: prevStroke
-
-                -- add the point the mouse is at to the most recent stroke
-                listWithoutPrevStroke =
-                    List.tail model.strokes |> Maybe.withDefault model.strokes
-
-                -- remove the most recent stroke from the list so we can add back the updated version of it
             in
             if model.isDrawing then
-                { model | strokes = currentStroke :: listWithoutPrevStroke }
+                { model | strokes = currentStroke :: ( List.tail model.strokes |> Maybe.withDefault model.strokes ) }
 
             else
                 model
 
-        -- CanvasMouseMove will acculumate the points into a stroke
         CanvasMouseUp ->
             { model | isDrawing = False }
     , Cmd.none
@@ -134,16 +122,16 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div [ class "container"]
         [ Canvas.toHtml ( width, height )
             [ Mouse.onDown (.offsetPos >> CanvasMouseDown)
             , Mouse.onMove (.offsetPos >> CanvasMouseMove)
             , Mouse.onUp (\_ -> CanvasMouseUp)
             ]
-            -- ^^ Attributes
+            -- this first shape fills the canvas with white
             [ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
-            , shapes [ stroke Color.black, lineCap RoundCap, lineWidth 2, lineJoin RoundJoin ] (List.map createPath model.strokes)
-            ]
+            -- this second shape dictates how each Mouse.onDown stroke is drawn
+            , shapes [ stroke Color.black, lineCap RoundCap, lineWidth 2, lineJoin RoundJoin ] (List.map createPath model.strokes) ]
         ]
 
 
@@ -153,7 +141,9 @@ view model =
 -- 2: for each stroke, we split off the starting point, from all the others
 -- the first point goes inside `path startingPoint`, the rest we accumulate in a list of `lineTo segments`
 
-{-| createPath programmatically generates a path with a starting point and a list of segments, where the starting point is the first element in the model's strokes list, and the list of segments are comprised from the rest. -}
+
+{-| createPath programmatically generates a path with a starting point and a list of segments, where the starting point is the first element in the model's strokes list, and the list of segments are comprised from the rest.
+-}
 createPath : Stroke -> Shape
 createPath stroke =
     let
@@ -179,10 +169,8 @@ createPath stroke =
 -- gives us undo/redo if we want
 -- gives us the ability to completely separate event logic from data
 -- hacks to cut down on size of list for very long-running drawings (save the pixel-buffer of the canvas and load it, for example, letting us delete the list but losing undo/redo for it)
-
 -- NOTES:
 -- with our current design, a single click doesn't color a single pixel
-
 ---- PROGRAM ----
 
 

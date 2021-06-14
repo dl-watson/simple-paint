@@ -8,6 +8,7 @@ You can find the most recent version of this guide [here](https://github.com/hal
 ## Table of Contents
 
 * [Folder structure](#folder-structure)
+* [Dependencies](#dependencies)
 * [Installing Elm packages](#installing-elm-packages)
 * [Installing JavaScript packages](#installing-javascript-packages)
 * [Available scripts](#available-scripts)
@@ -30,29 +31,6 @@ You can find the most recent version of this guide [here](https://github.com/hal
 * [Configuring the Proxy Manually](#configuring-the-proxy-manually)
 * [Deployment](#deployment)
   * [Netlify](#netlify)
-
-## Installing Elm packages
-
-```sh
-elm-app install <package-name>
-```
-
-Other `elm-package` commands are also [available].(#package)
-
-## Installing JavaScript packages
-
-To use JavaScript packages from npm, you'll need to add a `package.json`, install the dependencies, and you're ready to go.
-
-```sh
-npm init -y # Add package.json
-npm install --save-dev pouchdb-browser # Install library from npm
-```
-
-```js
-// Use in your JS code
-import PouchDB from 'pouchdb-browser';
-const db = new PouchDB('mydb');
-```
 
 ## Folder structure
 
@@ -85,6 +63,35 @@ For the project to build, these files must exist with exact filenames:
 You can delete or rename the other files.
 
 You may create subdirectories inside src.
+
+## Dependencies
+
+* [elm-canvas](https://package.elm-lang.org/packages/joakin/elm-canvas/4.3.0/)
+* [elm-pointer-events](https://package.elm-lang.org/packages/mpizenberg/elm-pointer-events/latest/)
+* [elm-color](https://package.elm-lang.org/packages/avh4/elm-color/latest/)
+
+## Installing Elm packages
+
+```sh
+elm-app install <package-name>
+```
+
+Other `elm-package` commands are also [available].(#package)
+
+## Installing JavaScript packages
+
+To use JavaScript packages from npm, you'll need to add a `package.json`, install the dependencies, and you're ready to go.
+
+```sh
+npm init -y # Add package.json
+npm install --save-dev pouchdb-browser # Install library from npm
+```
+
+```js
+// Use in your JS code
+import PouchDB from 'pouchdb-browser';
+const db = new PouchDB('mydb');
+```
 
 ## Available scripts
 

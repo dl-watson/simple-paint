@@ -9,11 +9,18 @@
   height: inherit;
 }
 
+* { 
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
   margin: 0;
   text-align: center;
   color: #293c4b;
+  background-color: #191b1b69;
 }
 
 h1 {
@@ -25,6 +32,9 @@ img {
   max-width: 200px;
 }
 
-html { 
-  background-color: #191b1b69;
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
