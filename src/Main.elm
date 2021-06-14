@@ -209,6 +209,8 @@ createPath stroke =
        * implement draw point
        * implement color picker
        * implement line size picker
+    BUGS: 
+        * if you mouseup outside of the canvas, it doesn't trigger the CanvasMouseUp Msg
 -}
 ---- PROGRAM ----
 
