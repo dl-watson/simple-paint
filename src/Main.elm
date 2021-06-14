@@ -1,21 +1,16 @@
 module Main exposing (..)
 
--- elm install mpizenberg/elm-point-events
 -- import Html.Events.Extra.Touch as Touch -- when adding touch support
 
 import Browser
 import Canvas exposing (..)
 import Canvas.Settings exposing (..)
-import Canvas.Settings.Line exposing (LineCap(..), lineCap)
+import Canvas.Settings.Line exposing (..)
 import Color
 import Debug exposing (log)
 import Html exposing (Html, aside, div, h1, img, text)
 import Html.Attributes exposing (src, style)
 import Html.Events.Extra.Mouse as Mouse
-import Canvas.Settings.Line exposing (lineWidth)
-import Canvas.Settings.Line exposing (lineJoin)
-import Canvas.Settings.Line exposing (LineJoin)
-import Canvas.Settings.Line exposing (LineJoin(..))
 
 
 
@@ -23,17 +18,6 @@ import Canvas.Settings.Line exposing (LineJoin(..))
 -- [elm-pointer-events Extra.Mouse](https://package.elm-lang.org/packages/mpizenberg/elm-pointer-events/latest/Html-Events-Extra-Mouse)
 {-
    elm-canvas:
-   * path : Point -> List PathSegment -> Shape
-       args: `path startingPoint segments`
-       contains an implicit moveTo the starting point
-       in order to make a complex path, we need to put together a list of `PathSegment`s:
-           * lineTo, bezierCurveTo, moveTo, etc
-
-   * point : (Float, Float)
-       several of the `PathSegment` funcs take `Point`s as args
-
-   * shapes : List Setting -> List Shape -> Renderable
-
    * clear : Point -> Float -> Float -> Renderable
        ex: `[ clear (0, 0) width height ]
        use `clear` to remove the contents of a rectangle in the screen and make them transparent
@@ -44,27 +28,14 @@ import Canvas.Settings.Line exposing (LineJoin(..))
    * Canvas.Settings.Line lineCap : LineCap -> Setting
        determines how the end points of every line are drawn
        see [lineCap](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineCap) for more usage details
-
-
-   elm-pointer-events:
-   * type alias Event =
-       { ...
-       , clientPos : ( Float, Float )
-       , offsetPos : ( Float, Float )
-       ...
-       }
-       mouseEvent.clientPos holds the ( clientX, clientY ) properties of the event
-       when relative coordinates are needed, they are called offsetX/Y in a mouse event (available here with the attribute offsetPos)
-
-   * Mouse.onDown, .onMove, and .onUp (etc) are available with this package
 -}
 
-
+{-| `width` is a global variable representing the width of the canvas. -}
 width : number
 width =
     500
 
-
+{-| `height` is a global variable representing the height of the canvas. -}
 height : number
 height =
     300
@@ -72,25 +43,24 @@ height =
 
 
 ---- MODEL ----
--- (x, ) coordinatees
 
 
+{-| the `Point` type represents a single pair of ( x, y ) coordinates. -}
 type alias Point =
     ( Float, Float )
 
 
 
--- A stroke is the mouse positions from the user's mousedown until their mouseup
-
-
+{-| the `Stroke` type represents a list of coordinate pairs of `.offsetPos` mouse positions from a user's `Mouse.onDown` until their `Mouse.onUp`. -} 
 type alias Stroke =
     List Point
 
+
 type alias Model =
-    { -- All of the strokes made in our app, form the drawing
+    { -- strokes represents a list of all `Stroke`s; together they form the drawing.
       strokes : List Stroke
 
-    -- Possible alternative design involves holding a buffer to the current stroke, and using "strokes" to hold all *previously* finished strokes
+    -- Possible alternative design involves holding a buffer to the current stroke, and using "strokes" to hold all *previously* finished strokes.
     -- , currentStroke : Stroke
     , isDrawing : Bool
     }
@@ -172,18 +142,18 @@ view model =
             ]
             -- ^^ Attributes
             [ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
-            , shapes [ stroke Color.black, lineCap RoundCap, lineWidth 2, lineJoin RoundJoin ] (List.map createPath model.strokes) ]
+            , shapes [ stroke Color.black, lineCap RoundCap, lineWidth 2, lineJoin RoundJoin ] (List.map createPath model.strokes)
+            ]
         ]
 
 
 
 -- we have N lines to draw, but all we need to know is how to draw ONE line between two Points, then iterate
-
 -- so we have our list of strokes, for each one of them, we'll create a SHAPE using shapes
 -- 2: for each stroke, we split off the starting point, from all the others
 -- the first point goes inside `path startingPoint`, the rest we accumulate in a list of `lineTo segments`
 
-
+{-| createPath programmatically generates a path with a starting point and a list of segments, where the starting point is the first element in the model's strokes list, and the list of segments are comprised from the rest. -}
 createPath : Stroke -> Shape
 createPath stroke =
     let
@@ -196,11 +166,11 @@ createPath stroke =
     in
     -- List Point -> List PathSegment
     -- lineTo : Point -> PathSegment
-    path startingPoint (List.map (\segment -> (lineTo segment)) segments)
-    --                  List.map(segments, segment => lineTo(segment))
+    path startingPoint (List.map (\segment -> lineTo segment) segments)
 
 
 
+--                  List.map(segments, segment => lineTo(segment))
 -- line from (x1, y1) to (x2, y2)
 -- Mouse.onDown -> lineWidth, (lineCap = "round"), lineTo, stroke
 -- initialPoint = clientX / clientY
@@ -209,6 +179,10 @@ createPath stroke =
 -- gives us undo/redo if we want
 -- gives us the ability to completely separate event logic from data
 -- hacks to cut down on size of list for very long-running drawings (save the pixel-buffer of the canvas and load it, for example, letting us delete the list but losing undo/redo for it)
+
+-- NOTES:
+-- with our current design, a single click doesn't color a single pixel
+
 ---- PROGRAM ----
 
 
