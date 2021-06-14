@@ -42,6 +42,43 @@ height =
     400
 
 
+{-| `colorList` is a list of all Color.Color types.
+-}
+colorList : List (List Color.Color)
+colorList =
+    [ [ Color.lightRed
+      , Color.lightOrange
+      , Color.lightYellow
+      , Color.lightGreen
+      , Color.lightBlue
+      , Color.lightPurple
+      , Color.lightBrown
+      , Color.red
+      , Color.orange
+      , Color.yellow
+      , Color.green
+      , Color.blue
+      , Color.purple
+      , Color.brown
+      , Color.darkRed
+      , Color.darkOrange
+      , Color.darkYellow
+      , Color.darkGreen
+      , Color.darkBlue
+      , Color.darkPurple
+      , Color.darkBrown
+      , Color.white
+      , Color.lightGrey
+      , Color.grey
+      , Color.darkGrey
+      , Color.lightCharcoal
+      , Color.charcoal
+      , Color.darkCharcoal
+      , Color.black
+      ]
+    ]
+
+
 
 ---- MODEL ----
 
@@ -123,7 +160,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "container" ]
-        [ p [ class "title" ] [ Html.text "Draw something!" ]
+        [ p [ class "title" ] []
         , Canvas.toHtml ( width, height )
             [ Mouse.onDown (.offsetPos >> CanvasMouseDown)
             , Mouse.onMove (.offsetPos >> CanvasMouseMove)
@@ -135,10 +172,19 @@ view model =
             -- this second shape dictates how each Mouse.onDown line stroke is drawn
             , shapes [ stroke Color.black, lineCap RoundCap, lineWidth 2, lineJoin RoundJoin ] (List.map createPath model.strokes)
             ]
-        , div
-            []
-            [ Html.text "color" ]
+        , div [] (renderColorGrid colorList)
         ]
+
+
+colorGrid : List Color.Color -> Html msg
+colorGrid colors =
+    ul [ class "color-grid-container" ]
+        (List.map (\color -> li [ class "color-grid-elem", style "background-color" (Color.toCssString color) ] []) colors)
+
+
+renderColorGrid : List (List Color.Color) -> List (Html msg)
+renderColorGrid elem =
+    List.map colorGrid elem
 
 
 {-| createPath programmatically generates a path with a starting point and a list of segments, where the starting point is the first element in the model's strokes list, and the list of segments are comprised from the rest.
