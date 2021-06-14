@@ -55,7 +55,7 @@ view model =
         [ Canvas.toHtml ( width, height )
             []
             [ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
-            , shapes [ stroke Color.black ] [ path ( 100, 100 ) [ lineTo ( 200, 100 ) ] ]
+            , shapes [ stroke Color.black ] [ path ( 100, 100 ) [ lineTo ( 200, 150 ) ] ]
             ]
         ]
 
