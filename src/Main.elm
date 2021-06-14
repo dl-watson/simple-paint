@@ -169,7 +169,7 @@ view model =
             ]
             -- ^^ Attributes
             [ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
-            , shapes [ stroke Color.black ] [ createPath (List.head model.strokes  |> Maybe.withDefault [] )] ]
+            , shapes [ stroke Color.black ] (List.map createPath model.strokes) ]
         ]
 
 
