@@ -7,7 +7,7 @@ You can find the most recent version of this guide [here](https://github.com/hal
 
 ### Screenshot
 
-<img src="img/screenshot.png">
+<img src="public/img/screenshot.png">
 
 ## Table of Contents
 
