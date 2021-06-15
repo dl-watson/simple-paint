@@ -184,8 +184,9 @@ view model =
                         shapes
                             [ stroke strk.color, lineCap RoundCap, lineWidth 4, lineJoin RoundJoin ]
                             [ createPath strk ]
-                    )
-                    model.strokes
+                    ) 
+                    -- reversed so that the newest stroke is drawn at the top
+                    (List.reverse model.strokes)
             )
         , div [] (renderColorGrid colorList)
         ]
@@ -236,8 +237,8 @@ createPath stroke =
        * implement undo/redo
        * implement clear all
        * implement draw point
-       * implement color picker
        * implement line size picker
+       * get a drawing pen cursor working
     BUGS:
         * if you mouseup outside of the canvas, it doesn't trigger the CanvasMouseUp Msg
 -}
