@@ -124,7 +124,10 @@ type Msg
     = CanvasMouseDown Point
     | CanvasMouseMove Point
     | CanvasMouseUp
-    | ColorPicker Color
+
+
+
+-- | ColorPicker Color
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -152,9 +155,8 @@ update msg model =
 
         CanvasMouseUp ->
             { model | isDrawing = False }
-
-        ColorPicker color ->
-            { model | color = color }
+      -- ColorPicker color ->
+      --     { model | color = color }
     , Cmd.none
     )
 
@@ -182,7 +184,7 @@ view model =
         ]
 
 
-colorGrid : List Color -> Html msg
+colorGrid : List Color -> Html Msg
 colorGrid colors =
     ul [ class "color-grid-container" ]
         (List.map
@@ -193,7 +195,6 @@ colorGrid colors =
                     [ button
                         [ class "color-grid-button"
                         , style "background-color" (Color.toCssString color)
-                        -- , Mouse.onClick (color >> ColorPicker)
                         ]
                         []
                     ]
@@ -202,7 +203,7 @@ colorGrid colors =
         )
 
 
-renderColorGrid : List (List Color) -> List (Html msg)
+renderColorGrid : List (List Color) -> List (Html Msg)
 renderColorGrid elem =
     List.map colorGrid elem
 
