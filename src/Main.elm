@@ -18,13 +18,6 @@ import Html.Events.Extra.Mouse as Mouse
    * clear : Point -> Float -> Float -> Renderable
        ex: `[ clear (0, 0) width height ]
        use `clear` to remove the contents of a rectangle in the screen and make them transparent
-
-   * Canvas.Settings.Line lineWidth : Float -> Setting
-       specify the thickness of lines in space units
-
-   * Canvas.Settings.Line lineCap : LineCap -> Setting
-       determines how the end points of every line are drawn
-       see [lineCap](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineCap) for more usage details
 -}
 
 
@@ -92,7 +85,9 @@ type alias Point =
 {-| the `Stroke` type represents a list of coordinate pairs of `.offsetPos` mouse positions from a user's `Mouse.onDown` until their `Mouse.onUp`.
 -}
 type alias Stroke =
-    List Point
+    { data : List Point
+    , color : Color
+    }
 
 
 type alias Model =
@@ -124,6 +119,7 @@ type Msg
     = CanvasMouseDown Point
     | CanvasMouseMove Point
     | CanvasMouseUp
+    | ColorPicker Color
 
 
 
@@ -136,16 +132,18 @@ update msg model =
         CanvasMouseDown point ->
             { model
                 | isDrawing = True
-                , strokes = [ point ] :: model.strokes
+
+                -- start creating a new stroke
+                , strokes = { data = [ point ], color = model.color } :: model.strokes
             }
 
         CanvasMouseMove point ->
             let
                 prevStroke =
-                    List.head model.strokes |> Maybe.withDefault [ point ]
+                    List.head model.strokes |> Maybe.withDefault { data = [ point ], color = model.color }
 
                 currentStroke =
-                    point :: prevStroke
+                    { prevStroke | data = point :: prevStroke.data }
             in
             if model.isDrawing then
                 { model | strokes = currentStroke :: (List.tail model.strokes |> Maybe.withDefault model.strokes) }
@@ -155,8 +153,9 @@ update msg model =
 
         CanvasMouseUp ->
             { model | isDrawing = False }
-      -- ColorPicker color ->
-      --     { model | color = color }
+
+        ColorPicker color ->
+            { model | color = color }
     , Cmd.none
     )
 
@@ -175,11 +174,19 @@ view model =
             , Mouse.onUp (\_ -> CanvasMouseUp)
             ]
             -- this first shape fills the canvas with white
-            [ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
+            ([ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
 
-            -- this second shape dictates how each Mouse.onDown line stroke is drawn
-            , shapes [ stroke Color.black, lineCap RoundCap, lineWidth 2, lineJoin RoundJoin ] (List.map createPath model.strokes)
-            ]
+             -- this second shape dictates how each Mouse.onDown line stroke is drawn
+             -- , shapes [ stroke model.color, lineCap RoundCap, lineWidth 2, lineJoin RoundJoin ] (List.map createPath model.strokes)
+             ]
+                ++ List.map
+                    (\strk ->
+                        shapes
+                            [ stroke strk.color, lineCap RoundCap, lineWidth 4, lineJoin RoundJoin ]
+                            [ createPath strk ]
+                    )
+                    model.strokes
+            )
         , div [] (renderColorGrid colorList)
         ]
 
@@ -195,6 +202,7 @@ colorGrid colors =
                     [ button
                         [ class "color-grid-button"
                         , style "background-color" (Color.toCssString color)
+                        , Mouse.onClick (\_ -> ColorPicker color)
                         ]
                         []
                     ]
@@ -214,10 +222,10 @@ createPath : Stroke -> Shape
 createPath stroke =
     let
         startingPoint =
-            List.head (List.reverse stroke) |> Maybe.withDefault ( 0, 0 )
+            List.head (List.reverse stroke.data) |> Maybe.withDefault ( 0, 0 )
 
         segments =
-            List.tail (List.reverse stroke) |> Maybe.withDefault []
+            List.tail (List.reverse stroke.data) |> Maybe.withDefault []
     in
     path startingPoint (List.map (\segment -> lineTo segment) segments)
 
