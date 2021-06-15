@@ -32,6 +32,12 @@ img {
   max-width: 200px;
 }
 
+canvas {
+  /* cursor not working */
+  cursor: url('../public/img/pen.cur'), default;
+  /* url('https://image.flaticon.com/icons/png/512/63/63438.png') */
+}
+
 .container {
   display: flex;
   flex-direction: column;
@@ -52,6 +58,15 @@ img {
 .color-grid-elem {
   list-style-type: none;
   display: inline-block;
-  padding: 10px;
   margin: 2px;
+}
+
+.color-grid-button {
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.color-grid-button:hover {
+  transform: scale(1.2);
 }

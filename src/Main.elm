@@ -6,7 +6,7 @@ import Browser
 import Canvas exposing (..)
 import Canvas.Settings exposing (..)
 import Canvas.Settings.Line exposing (..)
-import Color
+import Color exposing (Color)
 import Html exposing (..)
 import Html.Attributes exposing (class, src, style)
 import Html.Events.Extra.Mouse as Mouse
@@ -44,7 +44,7 @@ height =
 
 {-| `colorList` is a list of all Color.Color types.
 -}
-colorList : List (List Color.Color)
+colorList : List (List Color)
 colorList =
     [ [ Color.lightRed
       , Color.lightOrange
@@ -98,6 +98,7 @@ type alias Stroke =
 type alias Model =
     { -- `strokes` represents a list of all `Stroke`s; together they form the drawing.
       strokes : List Stroke
+    , color : Color
 
     -- Possible alternative design involves holding a buffer to the current stroke, and using "strokes" to hold all *previously* finished strokes.
     -- , currentStroke : Stroke
@@ -109,6 +110,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { strokes = []
       , isDrawing = False
+      , color = Color.black
       }
     , Cmd.none
     )
@@ -122,6 +124,7 @@ type Msg
     = CanvasMouseDown Point
     | CanvasMouseMove Point
     | CanvasMouseUp
+    | ColorPicker Color
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -149,6 +152,9 @@ update msg model =
 
         CanvasMouseUp ->
             { model | isDrawing = False }
+
+        ColorPicker color ->
+            { model | color = color }
     , Cmd.none
     )
 
@@ -176,13 +182,27 @@ view model =
         ]
 
 
-colorGrid : List Color.Color -> Html msg
+colorGrid : List Color -> Html msg
 colorGrid colors =
     ul [ class "color-grid-container" ]
-        (List.map (\color -> li [ class "color-grid-elem", style "background-color" (Color.toCssString color) ] []) colors)
+        (List.map
+            (\color ->
+                li
+                    [ class "color-grid-elem"
+                    ]
+                    [ button
+                        [ class "color-grid-button"
+                        , style "background-color" (Color.toCssString color)
+                        -- , Mouse.onClick (color >> ColorPicker)
+                        ]
+                        []
+                    ]
+            )
+            colors
+        )
 
 
-renderColorGrid : List (List Color.Color) -> List (Html msg)
+renderColorGrid : List (List Color) -> List (Html msg)
 renderColorGrid elem =
     List.map colorGrid elem
 
@@ -209,7 +229,7 @@ createPath stroke =
        * implement draw point
        * implement color picker
        * implement line size picker
-    BUGS: 
+    BUGS:
         * if you mouseup outside of the canvas, it doesn't trigger the CanvasMouseUp Msg
 -}
 ---- PROGRAM ----
