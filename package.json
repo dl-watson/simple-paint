@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/dl-watson/simple-paint/issues"
   },
-  "homepage": "https://github.com/dl-watson/simple-paint#readme"
+  "homepage": "https://github.com/dl-watson/simple-paint#readme",
+  "devDependencies": {
+    "create-elm-app": "^5.22.0"
+  }
 }
