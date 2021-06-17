@@ -70,3 +70,10 @@ canvas {
 .color-grid-button:hover {
   transform: scale(1.2);
 }
+
+.clear-button {
+  border: none;
+  padding: 4px;
+  margin: 5px;
+  cursor: pointer;
+}

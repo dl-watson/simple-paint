@@ -13,12 +13,17 @@ import Html.Events.Extra.Mouse as Mouse
 
 
 
-{-
-   elm-canvas:
-   * clear : Point -> Float -> Float -> Renderable
-       ex: `[ clear (0, 0) width height ]
-       use `clear` to remove the contents of a rectangle in the screen and make them transparent
--}
+---- PROGRAM ----
+
+
+main : Program () Model Msg
+main =
+    Browser.element
+        { view = view
+        , init = \_ -> init
+        , update = update
+        , subscriptions = always Sub.none
+        }
 
 
 {-| `width` is a global variable representing the width of the canvas.
@@ -120,10 +125,7 @@ type Msg
     | CanvasMouseMove Point
     | CanvasMouseUp
     | ColorPicker Color
-
-
-
--- | ColorPicker Color
+    | ClearAll
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -156,6 +158,9 @@ update msg model =
 
         ColorPicker color ->
             { model | color = color }
+
+        ClearAll ->
+            { model | strokes = [] }
     , Cmd.none
     )
 
@@ -184,11 +189,12 @@ view model =
                         shapes
                             [ stroke strk.color, lineCap RoundCap, lineWidth 4, lineJoin RoundJoin ]
                             [ createPath strk ]
-                    ) 
+                    )
                     -- reversed so that the newest stroke is drawn at the top
                     (List.reverse model.strokes)
             )
         , div [] (renderColorGrid colorList)
+        , button [ class "clear-button", Mouse.onClick (\_ -> ClearAll) ] [ Html.text "clear" ]
         ]
 
 
@@ -242,14 +248,3 @@ createPath stroke =
     BUGS:
         * if you mouseup outside of the canvas, it doesn't trigger the CanvasMouseUp Msg
 -}
----- PROGRAM ----
-
-
-main : Program () Model Msg
-main =
-    Browser.element
-        { view = view
-        , init = \_ -> init
-        , update = update
-        , subscriptions = always Sub.none
-        }
