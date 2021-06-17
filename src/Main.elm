@@ -155,6 +155,9 @@ update msg model =
 
                 -- every new action can be undone
                 , undo = [ model.actions ] ++ model.undo
+
+                -- every new action clears the redo stack
+                , redo =  [[]]
             }
 
         CanvasMouseMove point ->
@@ -186,7 +189,7 @@ update msg model =
             }
 
         Undo ->
-            -- undo should take the most recent action off the undo stack (if it exists) and apply it to the redo stack
+            -- undo should take the most recent action off the undo stack (if it exists), set the current action to the new head of the undo list, and append the previous head of the undo stack to the redo stack
             { model
                 | undo = List.tail model.undo |> Maybe.withDefault model.undo
                 , redo = List.take 1 model.undo ++ model.redo
@@ -194,7 +197,12 @@ update msg model =
             }
 
         Redo ->
-            model
+            -- redo should take the most recent action off the redo stack (if it exists),set the current action to the new head of the redo list, and append the previous head of the redo stack to the undo stack
+            { model
+                | redo = List.tail model.redo |> Maybe.withDefault model.redo
+                , undo = List.take 1 model.redo ++ model.undo
+                , actions = List.head model.redo |> Maybe.withDefault []
+            }
     , Cmd.none
     )
 
