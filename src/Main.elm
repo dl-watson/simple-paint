@@ -90,16 +90,16 @@ type alias Point =
 {-| the `Stroke` type represents a list of coordinate pairs of `.offsetPos` mouse positions from a user's `Mouse.onDown` until their `Mouse.onUp`.
 -}
 type alias Actions =
-    { data : List Point
+    { strokes : List Point
     , color : Color
     }
 
 
 type alias Model =
-    { -- `strokes` represents a list of all `Stroke`s; together they form the drawing.
-      actions : List Actions
+    { actions : List Actions
     , color : Color
-    , prevState : List Actions
+    , undo : List (List Actions)
+    , redo : List (List Actions)
 
     -- Possible alternative design involves holding a buffer to the current stroke, and using "strokes" to hold all *previously* finished strokes.
     -- , currentStroke : Stroke
@@ -110,9 +110,10 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( { actions = []
+      , undo = [ [] ]
+      , redo = [ [] ]
       , isDrawing = False
       , color = Color.black
-      , prevState = []
       }
     , Cmd.none
     )
@@ -120,13 +121,13 @@ init =
 
 
 {-
-undo/redo/clear logic:
-* once there is an action, it can be undone (undo button disabled -> enabled)
-* once an action has been undone, it can be redone (redo button disabled -> enabled)
-* a clear is an action added to the list of actions and can be undone or redone
-* if there is a list of actions, undoing once adds that action to the list of re-doable actions
-* when a new action is taken it is prepended to the list of actions, so the head is always the last action taken (FIFO queue)
-* if you undo something and then take a NEW action (like drawing a new stroke), it empties the redo stack
+   undo/redo/clear logic:
+   * once there is an action, it can be undone (undo button disabled -> enabled)
+   * once an action has been undone, it can be redone (redo button disabled -> enabled)
+   * a clear is an action added to the list of actions and can be undone or redone
+   * if there is a list of actions, undoing once adds that action to the list of re-doable actions
+   * when a new action is taken it is prepended to the list of actions, so the head is always the last action taken (FIFO queue)
+   * if you undo something and then take a NEW action (like drawing a new stroke), it empties the redo stack
 
 -}
 ---- UPDATE ----
@@ -150,16 +151,19 @@ update msg model =
                 | isDrawing = True
 
                 -- start creating a new stroke
-                , actions = { data = [ point ], color = model.color } :: model.actions
+                , actions = { strokes = [ point ], color = model.color } :: model.actions
+
+                -- every new action can be undone
+                , undo = [ model.actions ] ++ model.undo
             }
 
         CanvasMouseMove point ->
             let
                 prevStroke =
-                    List.head model.actions |> Maybe.withDefault { data = [ point ], color = model.color }
+                    List.head model.actions |> Maybe.withDefault { strokes = [ point ], color = model.color }
 
                 currentStroke =
-                    { prevStroke | data = point :: prevStroke.data }
+                    { prevStroke | strokes = point :: prevStroke.strokes }
             in
             if model.isDrawing then
                 { model | actions = currentStroke :: (List.tail model.actions |> Maybe.withDefault model.actions) }
@@ -174,10 +178,20 @@ update msg model =
             { model | color = color }
 
         ClearAll ->
-            { model | actions = [], prevState = model.actions }
+            -- when the clear button is hit, we treat this as a new action that clears the redo stack and the list of strokes but preserves the current stroke color and the list of undoable actions (clear itself can be undone)
+            { model
+                | undo = [ { strokes = [], color = model.color } :: model.actions ] ++ model.undo
+                , redo = []
+                , actions = [ { strokes = [], color = model.color } ]
+            }
 
         Undo ->
-            { model | actions = model.prevState }
+            -- undo should take the most recent action off the undo stack (if it exists) and apply it to the redo stack
+            { model
+                | undo = List.tail model.undo |> Maybe.withDefault model.undo
+                , redo = List.take 1 model.undo ++ model.redo
+                , actions = List.head model.undo |> Maybe.withDefault []
+            }
 
         Redo ->
             model
@@ -253,10 +267,10 @@ createPath : Actions -> Shape
 createPath stroke =
     let
         startingPoint =
-            List.head (List.reverse stroke.data) |> Maybe.withDefault ( 0, 0 )
+            List.head (List.reverse stroke.strokes) |> Maybe.withDefault ( 0, 0 )
 
         segments =
-            List.tail (List.reverse stroke.data) |> Maybe.withDefault []
+            List.tail (List.reverse stroke.strokes) |> Maybe.withDefault []
     in
     path startingPoint (List.map (\segment -> lineTo segment) segments)
 
