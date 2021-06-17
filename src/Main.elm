@@ -89,7 +89,7 @@ type alias Point =
 
 {-| the `Stroke` type represents a list of coordinate pairs of `.offsetPos` mouse positions from a user's `Mouse.onDown` until their `Mouse.onUp`.
 -}
-type alias Stroke =
+type alias Actions =
     { data : List Point
     , color : Color
     }
@@ -97,9 +97,9 @@ type alias Stroke =
 
 type alias Model =
     { -- `strokes` represents a list of all `Stroke`s; together they form the drawing.
-      strokes : List Stroke
+      actions : List Actions
     , color : Color
-    , prevState : List Stroke
+    , prevState : List Actions
 
     -- Possible alternative design involves holding a buffer to the current stroke, and using "strokes" to hold all *previously* finished strokes.
     -- , currentStroke : Stroke
@@ -109,7 +109,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { strokes = []
+    ( { actions = []
       , isDrawing = False
       , color = Color.black
       , prevState = []
@@ -150,19 +150,19 @@ update msg model =
                 | isDrawing = True
 
                 -- start creating a new stroke
-                , strokes = { data = [ point ], color = model.color } :: model.strokes
+                , actions = { data = [ point ], color = model.color } :: model.actions
             }
 
         CanvasMouseMove point ->
             let
                 prevStroke =
-                    List.head model.strokes |> Maybe.withDefault { data = [ point ], color = model.color }
+                    List.head model.actions |> Maybe.withDefault { data = [ point ], color = model.color }
 
                 currentStroke =
                     { prevStroke | data = point :: prevStroke.data }
             in
             if model.isDrawing then
-                { model | strokes = currentStroke :: (List.tail model.strokes |> Maybe.withDefault model.strokes) }
+                { model | actions = currentStroke :: (List.tail model.actions |> Maybe.withDefault model.actions) }
 
             else
                 model
@@ -174,10 +174,10 @@ update msg model =
             { model | color = color }
 
         ClearAll ->
-            { model | strokes = [], prevState = model.strokes }
+            { model | actions = [], prevState = model.actions }
 
         Undo ->
-            { model | strokes = model.prevState }
+            { model | actions = model.prevState }
 
         Redo ->
             model
@@ -202,7 +202,7 @@ view model =
             ([ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
 
              -- this second shape dictates how each Mouse.onDown line stroke is drawn
-             -- , shapes [ stroke model.color, lineCap RoundCap, lineWidth 2, lineJoin RoundJoin ] (List.map createPath model.strokes)
+             -- , shapes [ stroke model.color, lineCap RoundCap, lineWidth 2, lineJoin RoundJoin ] (List.map createPath model.actions)
              ]
                 ++ List.map
                     (\strk ->
@@ -211,7 +211,7 @@ view model =
                             [ createPath strk ]
                     )
                     -- reversed so that the newest stroke is drawn at the top
-                    (List.reverse model.strokes)
+                    (List.reverse model.actions)
             )
         , div [] (renderColorGrid colorList)
         , div [ class "controls-container" ]
@@ -249,7 +249,7 @@ renderColorGrid elem =
 
 {-| createPath programmatically generates a path with a starting point and a list of segments, where the starting point is the first element in the model's strokes list, and the list of segments are comprised from the rest.
 -}
-createPath : Stroke -> Shape
+createPath : Actions -> Shape
 createPath stroke =
     let
         startingPoint =
