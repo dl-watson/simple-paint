@@ -71,7 +71,11 @@ canvas {
   transform: scale(1.2);
 }
 
-.clear-button {
+.controls-container {
+
+}
+
+.buttons {
   border: none;
   padding: 4px;
   margin: 5px;

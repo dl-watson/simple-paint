@@ -99,6 +99,7 @@ type alias Model =
     { -- `strokes` represents a list of all `Stroke`s; together they form the drawing.
       strokes : List Stroke
     , color : Color
+    , prevState : List Stroke
 
     -- Possible alternative design involves holding a buffer to the current stroke, and using "strokes" to hold all *previously* finished strokes.
     -- , currentStroke : Stroke
@@ -111,12 +112,23 @@ init =
     ( { strokes = []
       , isDrawing = False
       , color = Color.black
+      , prevState = []
       }
     , Cmd.none
     )
 
 
 
+{-
+undo/redo/clear logic:
+* once there is an action, it can be undone (undo button disabled -> enabled)
+* once an action has been undone, it can be redone (redo button disabled -> enabled)
+* a clear is an action added to the list of actions and can be undone or redone
+* if there is a list of actions, undoing once adds that action to the list of re-doable actions
+* when a new action is taken it is prepended to the list of actions, so the head is always the last action taken (FIFO queue)
+* if you undo something and then take a NEW action (like drawing a new stroke), it empties the redo stack
+
+-}
 ---- UPDATE ----
 
 
@@ -126,6 +138,8 @@ type Msg
     | CanvasMouseUp
     | ColorPicker Color
     | ClearAll
+    | Undo
+    | Redo
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -160,7 +174,13 @@ update msg model =
             { model | color = color }
 
         ClearAll ->
-            { model | strokes = [] }
+            { model | strokes = [], prevState = model.strokes }
+
+        Undo ->
+            { model | strokes = model.prevState }
+
+        Redo ->
+            model
     , Cmd.none
     )
 
@@ -194,7 +214,11 @@ view model =
                     (List.reverse model.strokes)
             )
         , div [] (renderColorGrid colorList)
-        , button [ class "clear-button", Mouse.onClick (\_ -> ClearAll) ] [ Html.text "clear" ]
+        , div [ class "controls-container" ]
+            [ button [ class "buttons", Mouse.onClick (\_ -> Undo) ] [ Html.text "undo" ]
+            , button [ class "buttons", Mouse.onClick (\_ -> Redo) ] [ Html.text "redo" ]
+            , button [ class "buttons", Mouse.onClick (\_ -> ClearAll) ] [ Html.text "clear" ]
+            ]
         ]
 
 
