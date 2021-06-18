@@ -8,7 +8,7 @@ import Canvas.Settings exposing (..)
 import Canvas.Settings.Line exposing (..)
 import Color exposing (Color)
 import Html exposing (..)
-import Html.Attributes exposing (class, src, style)
+import Html.Attributes exposing (..)
 import Html.Events.Extra.Mouse as Mouse
 
 
@@ -98,8 +98,8 @@ type alias Actions =
 type alias Model =
     { actions : List Actions
     , color : Color
-    , undo : List (List Actions)
-    , redo : List (List Actions)
+    , undo : List Actions
+    , redo : List Actions
 
     -- Possible alternative design involves holding a buffer to the current stroke, and using "strokes" to hold all *previously* finished strokes.
     -- , currentStroke : Stroke
@@ -110,8 +110,8 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( { actions = []
-      , undo = [ [] ]
-      , redo = [ [] ]
+      , undo = []
+      , redo = []
       , isDrawing = False
       , color = Color.black
       }
@@ -153,11 +153,11 @@ update msg model =
                 -- start creating a new stroke
                 , actions = { strokes = [ point ], color = model.color } :: model.actions
 
-                -- every new action can be undone
-                , undo = [ model.actions ] ++ model.undo
-
+                -- every new action can be undone (add this action to the undo stack)
+                -- current BUG: the default is being used for the first action, adding just a single point to the array of undoable actions (a single point isn't painted on the canvas, so visually it looks like nothing is happening)
+                -- aka, this is the wrong default, and results in the undo stack being one behind the model.actions stack
                 -- every new action clears the redo stack
-                , redo =  [[]]
+                , redo = []
             }
 
         CanvasMouseMove point ->
@@ -175,7 +175,11 @@ update msg model =
                 model
 
         CanvasMouseUp ->
-            { model | isDrawing = False }
+            let updatedModel = { model | isDrawing = False }
+            in
+                case List.head model.actions of
+                    Just stroke -> { updatedModel | undo = stroke :: model.undo }
+                    Nothing -> updatedModel
 
         ColorPicker color ->
             { model | color = color }
@@ -183,25 +187,29 @@ update msg model =
         ClearAll ->
             -- when the clear button is hit, we treat this as a new action that clears the redo stack and the list of strokes but preserves the current stroke color and the list of undoable actions (clear itself can be undone)
             { model
-                | undo = [ { strokes = [], color = model.color } :: model.actions ] ++ model.undo
+                | undo = ( { strokes = [], color = model.color } :: model.actions ) ++ model.undo
                 , redo = []
                 , actions = [ { strokes = [], color = model.color } ]
             }
 
         Undo ->
             -- undo should take the most recent action off the undo stack (if it exists), set the current action to the new head of the undo list, and append the previous head of the undo stack to the redo stack
+            -- when the undo stack is empty, the undo button should be disabled
+            -- when the undo stack is empty AND the redo stack is empty, both the undo and the redo buttons should be disabled
             { model
                 | undo = List.tail model.undo |> Maybe.withDefault model.undo
                 , redo = List.take 1 model.undo ++ model.redo
-                , actions = List.head model.undo |> Maybe.withDefault []
+                , actions = List.tail model.actions |> Maybe.withDefault model.actions
             }
 
         Redo ->
             -- redo should take the most recent action off the redo stack (if it exists),set the current action to the new head of the redo list, and append the previous head of the redo stack to the undo stack
+            -- when the redo stack is empty, the redo button should be disabled
+            -- current BUG: redo is one behind
             { model
-                | redo = List.tail model.redo |> Maybe.withDefault model.redo
-                , undo = List.take 1 model.redo ++ model.undo
-                , actions = List.head model.redo |> Maybe.withDefault []
+                | undo = List.take 1 model.redo ++ model.undo
+                , redo = List.tail model.redo |> Maybe.withDefault model.redo
+                , actions = (List.head model.redo |> Maybe.map (\x -> x :: model.actions)) |> Maybe.withDefault model.actions 
             }
     , Cmd.none
     )
@@ -237,8 +245,24 @@ view model =
             )
         , div [] (renderColorGrid colorList)
         , div [ class "controls-container" ]
-            [ button [ class "buttons", Mouse.onClick (\_ -> Undo) ] [ Html.text "undo" ]
-            , button [ class "buttons", Mouse.onClick (\_ -> Redo) ] [ Html.text "redo" ]
+            [ button
+                [ class "buttons"
+                , if List.length model.undo > 0 then
+                    Mouse.onClick (\_ -> Undo)
+
+                  else
+                    disabled True
+                ]
+                [ Html.text "undo" ]
+            , button
+                [ class "buttons"
+                , if List.length model.redo > 0 then
+                    Mouse.onClick (\_ -> Redo)
+
+                  else
+                    disabled True
+                ]
+                [ Html.text "redo" ]
             , button [ class "buttons", Mouse.onClick (\_ -> ClearAll) ] [ Html.text "clear" ]
             ]
         ]
