@@ -233,7 +233,6 @@ view model =
             ([ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
 
              -- this second shape dictates how each Mouse.onDown line stroke is drawn
-             -- , shapes [ stroke model.color, lineCap RoundCap, lineWidth 2, lineJoin RoundJoin ] (List.map createPath model.actions)
              ]
                 ++ List.map
                     (\strk ->
@@ -331,8 +330,6 @@ createPath stroke =
 
 {-
    NEXT:
-       * implement undo/redo
-       * implement clear all
        * implement draw point
        * implement line size picker
        * get a drawing pen cursor working
