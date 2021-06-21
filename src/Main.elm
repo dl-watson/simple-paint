@@ -327,13 +327,15 @@ createPath stroke =
         segments =
             List.tail (List.reverse stroke.strokes) |> Maybe.withDefault []
     in
-    path startingPoint (List.map (\segment -> lineTo segment) segments)
+    if (List.length segments < 1) then
+        circle startingPoint 0.5 
+    else 
+        path startingPoint (List.map (\segment -> lineTo segment) segments)
 
 
 
 {-
    NEXT:
-       * implement draw point
        * implement line size picker
     BUGS:
         * if you mouseup outside of the canvas, it doesn't trigger the CanvasMouseUp Msg
