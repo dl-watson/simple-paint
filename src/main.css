@@ -33,7 +33,7 @@ img {
 }
 
 elm-canvas {
-  cursor: url('http://www.rw-designer.com/cursor-view/150753.png') 8 36, auto; 
+  cursor: url('../public/img/drawing_cursor.png') 8 36, auto; 
 }
 
 .container {
