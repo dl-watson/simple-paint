@@ -153,7 +153,6 @@ update msg model =
 
                 -- start creating a new stroke
                 , actions = { strokes = [ point ], color = model.color, shape = Nothing } :: model.actions
-
                 , redo = []
             }
 
@@ -172,11 +171,16 @@ update msg model =
                 model
 
         CanvasMouseUp ->
-            let updatedModel = { model | isDrawing = False }
+            let
+                updatedModel =
+                    { model | isDrawing = False }
             in
-                case List.head model.actions of
-                    Just stroke -> { updatedModel | undo = stroke :: model.undo }
-                    Nothing -> updatedModel
+            case List.head model.actions of
+                Just stroke ->
+                    { updatedModel | undo = stroke :: model.undo }
+
+                Nothing ->
+                    updatedModel
 
         ColorPicker color ->
             { model | color = color }
@@ -206,7 +210,7 @@ update msg model =
             { model
                 | undo = List.take 1 model.redo ++ model.undo
                 , redo = List.tail model.redo |> Maybe.withDefault model.redo
-                , actions = (List.head model.redo |> Maybe.map (\x -> x :: model.actions)) |> Maybe.withDefault model.actions 
+                , actions = (List.head model.redo |> Maybe.map (\x -> x :: model.actions)) |> Maybe.withDefault model.actions
             }
     , Cmd.none
     )
@@ -233,13 +237,14 @@ view model =
              ]
                 ++ List.map
                     (\strk ->
-                    -- if strk.shapes has a value
-                    if (strk.shape /= Nothing) then
-                        clearRect
-                    else 
-                        shapes
-                            [ stroke strk.color, lineCap RoundCap, lineWidth 4, lineJoin RoundJoin ]
-                            [ createPath strk ]
+                        -- if strk.shapes has a value
+                        if strk.shape /= Nothing then
+                            clearRect
+
+                        else
+                            shapes
+                                [ stroke strk.color, lineCap RoundCap, lineWidth 4, lineJoin RoundJoin ]
+                                [ createPath strk ]
                     )
                     -- reversed so that the newest stroke is drawn at the top
                     (List.reverse model.actions)
@@ -264,12 +269,22 @@ view model =
                     disabled True
                 ]
                 [ Html.text "redo" ]
-            , button [ class "buttons", Mouse.onClick (\_ -> ClearAll) ] [ Html.text "clear" ]
+            , button
+                [ class "buttons"
+                , if List.length model.actions > 0 then
+                    Mouse.onClick (\_ -> ClearAll)
+
+                  else
+                    disabled True
+                ]
+                [ Html.text "clear" ]
             ]
         ]
 
-clearRect = 
-   shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
+
+clearRect =
+    shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
+
 
 colorGrid : List Color -> Html Msg
 colorGrid colors =
