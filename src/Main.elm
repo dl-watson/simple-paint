@@ -87,7 +87,7 @@ type alias Point =
     ( Float, Float )
 
 
-{-| the `Stroke` type represents a list of coordinate pairs of `.offsetPos` mouse positions from a user's `Mouse.onDown` until their `Mouse.onUp`.
+{-| a stroke represents a list of coordinate pairs of `.offsetPos` mouse positions from a user's `Mouse.onDown` until their `Mouse.onUp`, a color represents the current selected color, and a shape contains logic for either drawing to the canvas all line strokes or an empty rect (the current solution for "clear")
 -}
 type alias Actions =
     { strokes : List Point
@@ -98,13 +98,10 @@ type alias Actions =
 
 type alias Model =
     { actions : List Actions
-    , color : Color
     , undo : List Actions
     , redo : List Actions
-
-    -- Possible alternative design involves holding a buffer to the current stroke, and using "strokes" to hold all *previously* finished strokes.
-    -- , currentStroke : Stroke
     , isDrawing : Bool
+    , color : Color
     }
 
 
@@ -121,16 +118,6 @@ init =
 
 
 
-{-
-   undo/redo/clear logic:
-   * once there is an action, it can be undone (undo button disabled -> enabled)
-   * once an action has been undone, it can be redone (redo button disabled -> enabled)
-   * a clear is an action added to the list of actions and can be undone or redone
-   * if there is a list of actions, undoing once adds that action to the list of re-doable actions
-   * when a new action is taken it is prepended to the list of actions, so the head is always the last action taken (FIFO queue)
-   * if you undo something and then take a NEW action (like drawing a new stroke), it empties the redo stack
-
--}
 ---- UPDATE ----
 
 
@@ -185,12 +172,21 @@ update msg model =
         ColorPicker color ->
             { model | color = color }
 
+        {-
+           undo/redo/clear logic:
+           * once there is an action, it can be undone (undo button disabled -> enabled)
+           * once an action has been undone, it can be redone (redo button disabled -> enabled)
+           * a clear is an action added to the list of actions and can be undone or redone
+           * if there is a list of actions, undoing once adds that action to the list of re-doable actions
+           * when a new action is taken it is prepended to the list of actions, so the head is always the last action taken (FIFO queue)
+           * if you undo something and then take a NEW action (like drawing a new stroke), it empties the redo stack
+        -}
         ClearAll ->
             -- when the clear button is hit, we treat this as a new action that clears the redo stack and the list of strokes but preserves the current stroke color and the list of undoable actions (clear itself can be undone)
-            let 
-                clearAction = 
+            let
+                clearAction =
                     { strokes = [], color = model.color, shape = Just clearRect }
-            in            
+            in
             { model
                 | redo = []
                 , actions = clearAction :: model.actions
@@ -200,7 +196,6 @@ update msg model =
         Undo ->
             -- undo should take the most recent action off the undo stack (if it exists), set the current action to the new head of the undo list, and append the previous head of the undo stack to the redo stack
             -- when the undo stack is empty, the undo button should be disabled
-            -- when the undo stack is empty AND the redo stack is empty, both the undo and the redo buttons should be disabled
             { model
                 | undo = List.tail model.undo |> Maybe.withDefault model.undo
                 , redo = List.take 1 model.undo ++ model.redo
@@ -209,7 +204,6 @@ update msg model =
 
         Redo ->
             -- redo should take the most recent action off the redo stack (if it exists),set the current action to the new head of the redo list, and append the previous head of the redo stack to the undo stack
-            -- when the redo stack is empty, the redo button should be disabled
             { model
                 | undo = List.take 1 model.redo ++ model.undo
                 , redo = List.tail model.redo |> Maybe.withDefault model.redo
@@ -235,20 +229,21 @@ view model =
             -- this first shape fills the canvas with white
             ([ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
 
-             -- this second shape dictates how each Mouse.onDown line stroke is drawn
+             -- this second shape dictates how each line stroke (or clear rect) is drawn
              ]
                 ++ List.map
                     (\strk ->
-                        -- if strk.shapes has a value
+                        -- if strk.shapes is anything but Nothing, then draw a rect
                         if strk.shape /= Nothing then
                             clearRect
+                            -- otherwise, draw each stroke
 
                         else
                             shapes
                                 [ stroke strk.color, lineCap RoundCap, lineWidth 4, lineJoin RoundJoin ]
                                 [ createPath strk ]
                     )
-                    -- reversed so that the newest stroke is drawn at the top
+                    -- this list reversed so that the newest stroke is drawn at the top
                     (List.reverse model.actions)
             )
         , div [] (renderColorGrid colorList)
@@ -327,16 +322,17 @@ createPath stroke =
         segments =
             List.tail (List.reverse stroke.strokes) |> Maybe.withDefault []
     in
-    if (List.length segments < 1) then
-        circle startingPoint 0.5 
-    else 
+    if List.length segments < 1 then
+        circle startingPoint 0.5
+
+    else
         path startingPoint (List.map (\segment -> lineTo segment) segments)
 
 
 
 {-
    NEXT:
-       * implement line size picker
-    BUGS:
-        * if you mouseup outside of the canvas, it doesn't trigger the CanvasMouseUp Msg
+      * implement line size picker
+   BUGS:
+       * if you mouseup outside of the canvas, it doesn't trigger the CanvasMouseUp Msg
 -}
