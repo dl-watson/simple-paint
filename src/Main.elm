@@ -187,10 +187,14 @@ update msg model =
 
         ClearAll ->
             -- when the clear button is hit, we treat this as a new action that clears the redo stack and the list of strokes but preserves the current stroke color and the list of undoable actions (clear itself can be undone)
+            let 
+                clearAction = 
+                    { strokes = [], color = model.color, shape = Just clearRect }
+            in            
             { model
                 | redo = []
-                , actions = { strokes = [], color = model.color, shape = Just clearRect } :: model.actions
-                , undo = { strokes = [], color = model.color, shape = Just clearRect } :: model.undo
+                , actions = clearAction :: model.actions
+                , undo = clearAction :: model.undo
             }
 
         Undo ->
@@ -206,7 +210,6 @@ update msg model =
         Redo ->
             -- redo should take the most recent action off the redo stack (if it exists),set the current action to the new head of the redo list, and append the previous head of the redo stack to the undo stack
             -- when the redo stack is empty, the redo button should be disabled
-            -- current BUG: redo is one behind
             { model
                 | undo = List.take 1 model.redo ++ model.undo
                 , redo = List.tail model.redo |> Maybe.withDefault model.redo

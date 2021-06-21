@@ -32,10 +32,8 @@ img {
   max-width: 200px;
 }
 
-canvas {
-  /* cursor not working */
-  cursor: url('../public/img/pen.cur'), default;
-  /* url('https://image.flaticon.com/icons/png/512/63/63438.png') */
+elm-canvas {
+  cursor: url('http://www.rw-designer.com/cursor-view/150753.png') 8 36, auto; 
 }
 
 .container {
