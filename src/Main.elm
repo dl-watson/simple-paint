@@ -92,6 +92,7 @@ type alias Point =
 type alias Actions =
     { strokes : List Point
     , color : Color
+    , shape : Maybe Renderable
     }
 
 
@@ -151,19 +152,15 @@ update msg model =
                 | isDrawing = True
 
                 -- start creating a new stroke
-                , actions = { strokes = [ point ], color = model.color } :: model.actions
+                , actions = { strokes = [ point ], color = model.color, shape = Nothing } :: model.actions
 
-                -- every new action can be undone (add this action to the undo stack)
-                -- current BUG: the default is being used for the first action, adding just a single point to the array of undoable actions (a single point isn't painted on the canvas, so visually it looks like nothing is happening)
-                -- aka, this is the wrong default, and results in the undo stack being one behind the model.actions stack
-                -- every new action clears the redo stack
                 , redo = []
             }
 
         CanvasMouseMove point ->
             let
                 prevStroke =
-                    List.head model.actions |> Maybe.withDefault { strokes = [ point ], color = model.color }
+                    List.head model.actions |> Maybe.withDefault { strokes = [ point ], color = model.color, shape = Nothing }
 
                 currentStroke =
                     { prevStroke | strokes = point :: prevStroke.strokes }
@@ -187,9 +184,9 @@ update msg model =
         ClearAll ->
             -- when the clear button is hit, we treat this as a new action that clears the redo stack and the list of strokes but preserves the current stroke color and the list of undoable actions (clear itself can be undone)
             { model
-                | undo = ( { strokes = [], color = model.color } :: model.actions ) ++ model.undo
-                , redo = []
-                , actions = [ { strokes = [], color = model.color } ]
+                | redo = []
+                , actions = { strokes = [], color = model.color, shape = Just clearRect } :: model.actions
+                , undo = { strokes = [], color = model.color, shape = Just clearRect } :: model.undo
             }
 
         Undo ->
@@ -236,6 +233,10 @@ view model =
              ]
                 ++ List.map
                     (\strk ->
+                    -- if strk.shapes has a value
+                    if (strk.shape /= Nothing) then
+                        clearRect
+                    else 
                         shapes
                             [ stroke strk.color, lineCap RoundCap, lineWidth 4, lineJoin RoundJoin ]
                             [ createPath strk ]
@@ -267,6 +268,8 @@ view model =
             ]
         ]
 
+clearRect = 
+   shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
 
 colorGrid : List Color -> Html Msg
 colorGrid colors =
