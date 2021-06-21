@@ -253,34 +253,33 @@ view model =
         , div [ class "controls-container" ]
             [ button
                 [ class "buttons"
-                , if List.length model.undo > 0 then
-                    Mouse.onClick (\_ -> Undo)
-
-                  else
-                    disabled True
+                , isButtonDisabled model.undo Undo
                 ]
-                [ Html.text "undo" ]
+                (buttonLabel "undo")
             , button
                 [ class "buttons"
-                , if List.length model.redo > 0 then
-                    Mouse.onClick (\_ -> Redo)
-
-                  else
-                    disabled True
+                , isButtonDisabled model.redo Redo
                 ]
-                [ Html.text "redo" ]
+                (buttonLabel "redo")
             , button
                 [ class "buttons"
-                , if List.length model.actions > 0 then
-                    Mouse.onClick (\_ -> ClearAll)
-
-                  else
-                    disabled True
+                , isButtonDisabled model.actions ClearAll 
                 ]
-                [ Html.text "clear" ]
+                (buttonLabel "clear")
             ]
         ]
 
+isButtonDisabled : List Actions -> Msg -> Attribute Msg
+isButtonDisabled model htmlMsg =
+    if List.length model > 0 then
+        Mouse.onClick (\_ -> htmlMsg)
+
+    else
+        disabled True
+
+buttonLabel : String -> List (Html msg)
+buttonLabel htmlTxt = 
+    [ Html.text htmlTxt ]
 
 clearRect =
     shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
