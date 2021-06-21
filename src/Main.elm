@@ -335,7 +335,6 @@ createPath stroke =
    NEXT:
        * implement draw point
        * implement line size picker
-       * get a drawing pen cursor working
     BUGS:
         * if you mouseup outside of the canvas, it doesn't trigger the CanvasMouseUp Msg
 -}
