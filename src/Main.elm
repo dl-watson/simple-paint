@@ -134,11 +134,18 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     ( case msg of
+        {-
+           undo/redo/clear logic:
+           * once there is an action, it can be undone (undo button disabled -> enabled)
+           * once an action has been undone, it can be redone (redo button disabled -> enabled)
+           * a clear is an action added to the list of actions and can be undone or redone
+           * if there is a list of actions, undoing once adds that action to the list of re-doable actions
+           * when a new action is taken it is prepended to the list of actions, so the head is always the last action taken (FIFO queue)
+           * if you undo something and then take a NEW action (like drawing a new stroke), it empties the redo stack
+        -}
         CanvasMouseDown point ->
             { model
                 | isDrawing = True
-
-                -- start creating a new stroke
                 , actions = { strokes = [ point ], color = model.color, shape = Nothing } :: model.actions
                 , redo = []
             }
@@ -172,15 +179,6 @@ update msg model =
         ColorPicker color ->
             { model | color = color }
 
-        {-
-           undo/redo/clear logic:
-           * once there is an action, it can be undone (undo button disabled -> enabled)
-           * once an action has been undone, it can be redone (redo button disabled -> enabled)
-           * a clear is an action added to the list of actions and can be undone or redone
-           * if there is a list of actions, undoing once adds that action to the list of re-doable actions
-           * when a new action is taken it is prepended to the list of actions, so the head is always the last action taken (FIFO queue)
-           * if you undo something and then take a NEW action (like drawing a new stroke), it empties the redo stack
-        -}
         ClearAll ->
             -- when the clear button is hit, we treat this as a new action that clears the redo stack and the list of strokes but preserves the current stroke color and the list of undoable actions (clear itself can be undone)
             let
