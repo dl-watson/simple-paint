@@ -263,11 +263,12 @@ view model =
                 (buttonLabel "redo")
             , button
                 [ class "buttons"
-                , isButtonDisabled model.actions ClearAll 
+                , isButtonDisabled model.actions ClearAll
                 ]
                 (buttonLabel "clear")
             ]
         ]
+
 
 isButtonDisabled : List Actions -> Msg -> Attribute Msg
 isButtonDisabled model htmlMsg =
@@ -277,10 +278,13 @@ isButtonDisabled model htmlMsg =
     else
         disabled True
 
+
 buttonLabel : String -> List (Html msg)
-buttonLabel htmlTxt = 
+buttonLabel htmlTxt =
     [ Html.text htmlTxt ]
 
+
+clearRect : Renderable
 clearRect =
     shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
 
